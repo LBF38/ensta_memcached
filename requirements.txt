@@ -2,3 +2,4 @@ pymemcache
 python-memcached
 pillow
 boto3
+python-dotenv
