@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import logging
 import os
 from memcache import Client
@@ -20,7 +21,21 @@ def show_image(data: bytes):
     image.show()
 
 
-class FileSystem:
+class Storage:
+    @abstractmethod
+    def create(self, key: str, data: bytes) -> bytes:
+        pass
+
+    @abstractmethod
+    def read(self, filename: str) -> bytes:
+        pass
+
+    @abstractmethod
+    def delete(self, key: str) -> None:
+        pass
+
+
+class FileSystem(Storage):
     def list(self, directory: str):
         return os.listdir(directory)
 
@@ -36,7 +51,7 @@ class FileSystem:
             return file.read()
 
 
-class Mem:
+class Mem(Storage):
     def __init__(self, client: Client) -> None:
         self.client = client
 
@@ -50,7 +65,7 @@ class Mem:
         self.client.delete(key)
 
 
-class AWSS3:
+class AWSS3(Storage):
     def __init__(self) -> None:
         self.ak = os.getenv(ak)
         self.sk = os.getenv(sk)
@@ -60,19 +75,22 @@ class AWSS3:
         )
         self.s3 = self.session.resource("s3")
         self.bucket = self.s3.Bucket("ensta")
+        self.log = logging.getLogger("AWSS3")
 
     def list(self):
-        logging.info("AWSS3:list - start listing")
+        self.log.debug("list - start listing")
         objects = self.bucket.objects.all()
         return [obj.key for obj in objects]
 
     def create(self, filename: str, data: bytes):
+        self.log.debug("create - filename: %s", filename)
         with open(filename, "rb") as data:
             self.bucket.put_object(Key=filename, Body=data)
 
     def read(self, filename: str):
+        self.log.debug("read - filename: %s", filename)
         return self.s3.Object("ensta", filename).get()["Body"].read().decode("UTF-8")
 
     def delete(self):
-        logging.warning("AWSS3:delete - Not implemented")
+        self.log.warning("delete - Not implemented")
         pass
