@@ -1,10 +1,14 @@
+import logging
 import os
 
-from utils import FileSystem, Mem, show_image
 from memcache import Client
+from utils import AWSS3, FileSystem, Mem, show_image
+
+logging.basicConfig(level=logging.INFO)
 
 FS = FileSystem()
 MEM = Mem(Client(["localhost"], debug=0))
+AWS = AWSS3()
 
 
 def file_system():
@@ -29,4 +33,6 @@ def memcached():
 
 if __name__ == "__main__":
     print("Start the program")
-    file_system()
+    # file_system()
+    # memcached()
+    print(AWS.list())
