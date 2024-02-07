@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 FS = FileSystem()
 MEM = Mem(Client(["localhost"], debug=0))
 AWS = AWSS3()
+log = logging.getLogger("main")
 
 
 def file_system(filename: str | None = None):
@@ -46,8 +47,24 @@ def memcached(filename: str | None = None):
     show_image(T2)
 
 
+def aws_program(filename: str | None = None):
+    log.info("AWS program")
+    log.info("list: %s", AWS.list())
+    if not filename:
+        filename = AWS.list()[0]
+    log.info("filename: %s", filename)
+    T = AWS.read(filename)
+    log.info("read file: %s", T[:10])
+    show_image(T)
+    AWS.create("new_file_s3", T)
+    log.info("file new_file_s3 created")
+    T2 = AWS.read("new_file_s3")
+    log.info("read file new_file_s3: %s", T2[:10])
+    show_image(T2)
+
+
 if __name__ == "__main__":
-    logging.info("Start the program")
-    file_system()
-    memcached()
-    # print(AWS.list())
+    log.info("Start the program")
+    # file_system()
+    # memcached()
+    aws_program()

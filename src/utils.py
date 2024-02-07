@@ -55,13 +55,13 @@ class Mem(Storage):
     def __init__(self, client: Client) -> None:
         self.client = client
 
-    def create(self, key, value):
+    def create(self, key: str, value: bytes):
         self.client.set(key, value)
 
-    def read(self, key):
-        return self.client.get(key)
+    def read(self, key: str) -> bytes:
+        return self.client.get(key).decode("UTF-8")
 
-    def delete(self, key):
+    def delete(self, key: str):
         self.client.delete(key)
 
 
