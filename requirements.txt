@@ -1,2 +1,4 @@
 pymemcache
 python-memcached
+pillow
+boto3
