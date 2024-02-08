@@ -2,9 +2,9 @@ import logging
 import os
 
 from memcache import Client
-from utils import AWSS3, FileSystem, Mem, show_image
+from utils import AWSS3, FileSystem, Mem, Replica, show_image
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 FS = FileSystem()
 client = Client(["localhost"], debug=0)
@@ -79,7 +79,18 @@ if __name__ == "__main__":
     # file_system()
     # memcached()
     # aws_program()
-    # print(AWS.list())
+    print(AWS.list())
     # print(AWS.delete("new_file_s3.jpg"))
-    print(MEM.create("K", b"\xff\xd8\xff\xe0\x00\x10JFIF"))
-    print(MEM.read("K"))
+    # print(MEM.create("K", b"\xff\xd8\xff\xe0\x00\x10JFIF"))
+    # print(MEM.read("K"))
+    replica = Replica(FS, AWS)
+    content = replica.read("ouvrez_moi.png")
+    if content:
+        log.info("read file ouvrez_moi.png: %s", content[:10])
+        show_image(content)
+    replica.create("ouvrez_moi_copy.png", content)
+    log.info("file ouvrez_moi_copy.png created")
+    log.info(AWS.list())
+    replica.delete("ouvrez_moi_copy.png")
+    log.info("file ouvrez_moi_copy.png deleted")
+    log.info(AWS.list())

@@ -2,7 +2,8 @@
     "conventionalCommits.scopes": [
         "project",
         "memcached",
-        "filesystem"
+        "filesystem",
+        "replica"
     ],
     "python.testing.unittestArgs": [
         "-v",
