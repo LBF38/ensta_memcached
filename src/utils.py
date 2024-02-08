@@ -11,9 +11,7 @@ from PIL import Image
 
 load_dotenv()
 # logging.basicConfig(level=logging.DEBUG)
-ak = "ak"
-sk = "sk"
-if not (os.getenv(ak) and os.getenv(sk)):
+if not (os.getenv("ak") and os.getenv("sk")):
     print("Please set up your AWS credentials in .env file")
     exit(1)
 
@@ -25,7 +23,7 @@ def show_image(data: bytes):
 
 class Storage:
     @abstractmethod
-    def create(self, key: str, data: bytes) -> bytes:
+    def create(self, key: str, data: bytes) -> None:
         pass
 
     @abstractmethod
@@ -91,8 +89,8 @@ class Mem(Storage):
 
 class AWSS3(Storage):
     def __init__(self) -> None:
-        self.ak = os.getenv(ak)
-        self.sk = os.getenv(sk)
+        self.ak = os.getenv("ak")
+        self.sk = os.getenv("sk")
         self.session = boto3.Session(
             aws_access_key_id=self.ak,
             aws_secret_access_key=self.sk,
@@ -141,7 +139,7 @@ class Replica(Storage):
         self.log.debug("read - filename: %s", filename)
         try:
             self.log.debug("trying filesystem")
-            self.fs.read(filename)
+            return self.fs.read(filename)
         except FileNotFoundError:
             self.log.debug("file not found in filesystem, trying aws")
             content = self.aws.read(filename)
@@ -171,7 +169,7 @@ class Tiering(Storage):
         self.log.debug("create - done")
 
     def read(self, filename: str, cost: int) -> bytes:
-        self.__storage(cost).read(filename)
+        return self.__storage(cost).read(filename)
 
     def delete(self, key: str, cost: int) -> None:
         self.log.debug("delete - key: %s", key)
