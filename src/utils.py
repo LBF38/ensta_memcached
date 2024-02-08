@@ -54,15 +54,26 @@ class FileSystem(Storage):
 class Mem(Storage):
     def __init__(self, client: Client) -> None:
         self.client = client
+        self.log = logging.getLogger("Mem")
 
     def create(self, key: str, value: bytes):
+        self.log.debug("create - key: %s", key)
         self.client.set(key, value)
+        # self.log.debug("create - done val:" + type(val))
 
     def read(self, key: str) -> bytes:
-        return self.client.get(key).decode("UTF-8")
+        self.log.debug("read - key: %s", key)
+        value = self.client.get(key)
+        if value is None:
+            self.log.warn("read - key not found")
+            raise ValueError(f"Key {key} not found")
+        self.log.debug("read - value: %s", value[:10])
+        return value
 
     def delete(self, key: str):
+        self.log.debug("delete - key: %s", key)
         self.client.delete(key)
+        self.log.debug("delete - done")
 
 
 class AWSS3(Storage):

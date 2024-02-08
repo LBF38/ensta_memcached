@@ -4,10 +4,11 @@ import os
 from memcache import Client
 from utils import AWSS3, FileSystem, Mem, show_image
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 FS = FileSystem()
-MEM = Mem(Client(["localhost"], debug=0))
+client = Client(["localhost"], debug=0)
+MEM = Mem(client)
 AWS = AWSS3()
 log = logging.getLogger("main")
 
@@ -42,7 +43,11 @@ def memcached(filename: str | None = None):
     show_image(T)
     MEM.create("K", T)
     log.info("key K created")
-    T2 = MEM.read("K")
+    try:
+        T2 = MEM.read("K")
+    except ValueError as e:
+        log.error(e)
+        return
     log.info("read key K: %s", T2[:10])
     show_image(T2)
 
