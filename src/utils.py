@@ -36,17 +36,24 @@ class Storage:
 
 
 class FileSystem(Storage):
+    def __init__(self) -> None:
+        self.log = logging.getLogger("FileSystem")
+
     def list(self, directory: str):
+        self.log.debug("list - directory: %s", directory)
         return os.listdir(directory)
 
     def create(self, filename: str, data: bytes):
+        self.log.debug("create - filename: %s", filename)
         with open(filename, "wb") as file:
             file.write(data)
 
     def delete(self, filename: str):
+        self.log.debug("delete - filename: %s", filename)
         os.remove(filename)
 
     def read(self, filename: str):
+        self.log.debug("read - filename: %s", filename)
         with open(filename, "rb") as file:
             return file.read()
 
