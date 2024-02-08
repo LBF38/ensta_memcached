@@ -13,7 +13,7 @@ AWS = AWSS3()
 log = logging.getLogger("main")
 
 
-def file_system(filename: str | None = None):
+def file_system(filename: str | None = None, img: bool = False):
     log = logging.getLogger("file_system")
     log.info("File System")
     if not filename:
@@ -24,15 +24,17 @@ def file_system(filename: str | None = None):
     log.info("list directory R: %s", os.listdir("R"))
     T = FS.read(filename)
     log.info("read file: %s", T[:10])
-    show_image(T)
+    if img:
+        show_image(T)
     FS.create("F", T)
     log.info("file F created")
     T2 = FS.read("F")
     log.info("read file F: %s", T2[:10])
-    show_image(T2)
+    if img:
+        show_image(T2)
 
 
-def memcached(filename: str | None = None):
+def memcached(filename: str | None = None, img: bool = False):
     log = logging.getLogger("memcached")
     log.info("Memcached")
     if not filename:
@@ -40,7 +42,8 @@ def memcached(filename: str | None = None):
     log.info("filename: %s", filename)
     T = FS.read(filename)
     log.info("read file: %s", T[:10])
-    show_image(T)
+    if img:
+        show_image(T)
     MEM.create("K", T)
     log.info("key K created")
     try:
@@ -49,10 +52,11 @@ def memcached(filename: str | None = None):
         log.error(e)
         return
     log.info("read key K: %s", T2[:10])
-    show_image(T2)
+    if img:
+        show_image(T2)
 
 
-def aws_program(filename: str | None = None):
+def aws_program(filename: str | None = None, img: bool = False):
     log.info("AWS program")
     log.info("list: %s", AWS.list())
     if not filename:
@@ -60,12 +64,14 @@ def aws_program(filename: str | None = None):
     log.info("filename: %s", filename)
     T = AWS.read(filename)
     log.info("read file: %s", T[:10])
-    show_image(T)
+    if img:
+        show_image(T)
     AWS.create("new_file_s3.jpg", T)
     log.info("file new_file_s3 created")
     T2 = AWS.read("new_file_s3.jpg")
     log.info("read file new_file_s3: %s", T2[:10])
-    show_image(T2)
+    if img:
+        show_image(T2)
 
 
 if __name__ == "__main__":
@@ -75,3 +81,5 @@ if __name__ == "__main__":
     # aws_program()
     # print(AWS.list())
     # print(AWS.delete("new_file_s3.jpg"))
+    print(MEM.create("K", b"\xff\xd8\xff\xe0\x00\x10JFIF"))
+    print(MEM.read("K"))

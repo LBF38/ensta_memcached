@@ -62,10 +62,14 @@ class Mem(Storage):
     def __init__(self, client: Client) -> None:
         self.client = client
         self.log = logging.getLogger("Mem")
+        self.log.debug("init - client %s", client.__class__)
 
     def create(self, key: str, value: bytes):
         self.log.debug("create - key: %s", key)
         self.client.set(key, value)
+        print("create - done val:", type(value))
+        print(value[:10])
+        print("key: ", key)
         # self.log.debug("create - done val:" + type(val))
 
     def read(self, key: str) -> bytes:
