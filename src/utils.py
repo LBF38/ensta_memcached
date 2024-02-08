@@ -72,12 +72,13 @@ class Mem(Storage):
         print("key: ", key)
         # self.log.debug("create - done val:" + type(val))
 
-    def read(self, key: str) -> bytes:
+    def read(self, key: str) -> bytes | None:
         self.log.debug("read - key: %s", key)
         value = self.client.get(key)
         if value is None:
             self.log.warn("read - key not found")
-            raise ValueError(f"Key {key} not found")
+            # raise ValueError(f"Key {key} not found")
+            return None
         self.log.debug("read - value: %s", value[:10])
         return value
 

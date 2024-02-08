@@ -46,10 +46,9 @@ def memcached(filename: str | None = None, img: bool = False):
         show_image(T)
     MEM.create("K", T)
     log.info("key K created")
-    try:
-        T2 = MEM.read("K")
-    except ValueError as e:
-        log.error(e)
+    T2 = MEM.read("K")
+    if not T2:
+        log.error("key K not found")
         return
     log.info("read key K: %s", T2[:10])
     if img:
@@ -77,20 +76,22 @@ def aws_program(filename: str | None = None, img: bool = False):
 if __name__ == "__main__":
     log.info("Start the program")
     # file_system()
-    # memcached()
+    # memcached("assets/image_small.jpg")
     # aws_program()
-    print(AWS.list())
+    # print(AWS.list())
     # print(AWS.delete("new_file_s3.jpg"))
     # print(MEM.create("K", b"\xff\xd8\xff\xe0\x00\x10JFIF"))
     # print(MEM.read("K"))
-    replica = Replica(FS, AWS)
-    content = replica.read("ouvrez_moi.png")
-    if content:
-        log.info("read file ouvrez_moi.png: %s", content[:10])
-        show_image(content)
-    replica.create("ouvrez_moi_copy.png", content)
-    log.info("file ouvrez_moi_copy.png created")
-    log.info(AWS.list())
-    replica.delete("ouvrez_moi_copy.png")
-    log.info("file ouvrez_moi_copy.png deleted")
-    log.info(AWS.list())
+
+    #####? Replica manual testing
+    # replica = Replica(FS, AWS)
+    # content = replica.read("ouvrez_moi.png")
+    # if content:
+    #     log.info("read file ouvrez_moi.png: %s", content[:10])
+    #     show_image(content)
+    # replica.create("ouvrez_moi_copy.png", content)
+    # log.info("file ouvrez_moi_copy.png created")
+    # log.info(AWS.list())
+    # replica.delete("ouvrez_moi_copy.png")
+    # log.info("file ouvrez_moi_copy.png deleted")
+    # log.info(AWS.list())
