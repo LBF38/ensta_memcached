@@ -120,3 +120,23 @@ class AWSS3(Storage):
         self.log.debug("delete - filename: %s", filename)
         self.bucket.Object(filename).delete()
         self.log.debug("delete - done")
+
+
+class Replica:
+    pass
+
+
+class Tiering:
+    pass
+
+
+class LRU:
+    pass
+
+
+def cache_2level():
+    pass
+
+
+class Auto_tiering:
+    pass
