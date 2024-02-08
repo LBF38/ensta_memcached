@@ -156,8 +156,40 @@ class Replica(Storage):
             self.log.error(e)
 
 
-class Tiering:
-    pass
+class Tiering(Storage):
+    def __init__(self, filesystem: FileSystem, aws: AWSS3, memcached: Mem) -> None:
+        self.fs = filesystem
+        self.aws = aws
+        self.mem = memcached
+        self.log = logging.getLogger("Tiering")
+
+    def create(self, key: str, data: bytes, cost: int):
+        self.log.debug("create - key: %s", key)
+        self.__storage(cost).create(key, data)
+        self.log.debug("create - done")
+
+    def read(self, filename: str, cost: int) -> bytes:
+        self.__storage(cost).read(filename)
+
+    def delete(self, key: str, cost: int) -> None:
+        self.log.debug("delete - key: %s", key)
+        try:
+            self.__storage(cost).delete(key)
+        except Exception as e:
+            self.log.error(e)
+        self.log.debug("delete - done")
+
+    def __storage(self, cost: int) -> Storage:
+        self.log.debug("storage - cost: %s", cost)
+        if cost < 100:
+            self.log.debug("cost < 100: aws storage")
+            return self.aws
+        elif cost < 1000:
+            self.log.debug("cost < 1000: filesystem storage")
+            return self.fs
+        else:
+            self.log.debug("cost >= 1000: memcached storage")
+            return self.mem
 
 
 class LRU:
