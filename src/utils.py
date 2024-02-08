@@ -1,11 +1,13 @@
-from abc import abstractmethod
+import io
 import logging
 import os
+from abc import abstractmethod
+from typing import Dict, Optional
+
+import boto3
+from dotenv import load_dotenv
 from memcache import Client
 from PIL import Image
-import io
-from dotenv import load_dotenv
-import boto3
 
 load_dotenv()
 # logging.basicConfig(level=logging.DEBUG)
@@ -192,15 +194,26 @@ class Tiering(Storage):
             return self.mem
 
 
+# Node = namedtuple("Node", ["value", "prev", "next"])
+class Node:
+    def __init__(
+        self, value: bytes, prev: Optional["Node"] = None, next: Optional["Node"] = None
+    ) -> None:
+        self.value = value
+        self.prev = prev
+        self.next = next
+
+
 class LRU:
     def __init__(self, capacity: int = 10) -> None:
-        self.__head = self.__tail = None
+        self.__head: Node | None = None
+        self.__tail: Node | None = None
         self.__capacity = capacity
         self.__length = 0
-        self.__lookup: dict = {}
-        self.__reverseLookup: dict = {}
+        self.__lookup: Dict[str, Node] = {}
+        self.__reverseLookup: Dict[Node, str] = {}
 
-    def create(self, key, value):
+    def create(self, key: str, value: bytes):
         # does it exist ?
         node = self.__lookup.get(key)
         if node is None:
@@ -216,7 +229,7 @@ class LRU:
             self.__prepend(node)
             node.value = value
 
-    def read(self, key):
+    def read(self, key: str):
         node = self.__lookup.get(key)
         if node is None:
             return
@@ -226,7 +239,7 @@ class LRU:
 
         return node.value
 
-    def delete(self, key):
+    def delete(self, key: str):
         node = self.__lookup.get(key)
         if node is None:
             return
@@ -236,7 +249,7 @@ class LRU:
         del self.__lookup[key]
         del self.__reverseLookup[node]
 
-    def __detach(self, node):
+    def __detach(self, node: Node):
         if node.prev:
             node.prev.next = node.next
         if node.next:
@@ -250,7 +263,7 @@ class LRU:
         node.next = None
         node.prev = None
 
-    def __prepend(self, node):
+    def __prepend(self, node: Node):
         if not self.__head:
             self.__head = self.__tail = node
             return
@@ -267,8 +280,8 @@ class LRU:
         del self.__reverseLookup[tail]
         self.__length -= 1
 
-    def __createNode(self, value):
-        return {value}
+    def __createNode(self, value: bytes):
+        return Node(value, None, None)
 
 
 def cache_2level():
