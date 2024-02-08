@@ -3,7 +3,8 @@
         "project",
         "memcached",
         "filesystem",
-        "replica"
+        "replica",
+        "storage"
     ],
     "python.testing.unittestArgs": [
         "-v",
