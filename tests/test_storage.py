@@ -38,3 +38,79 @@ class TestStorage(unittest.TestCase):
         replica.delete(replica_filename)
         assert replica_filename not in AWS.list()
         assert replica_filename not in FS.list(".")
+
+    def test_tiering(self):
+        # Arrange
+        tiering = Tiering(FS, AWS, MEM)
+        content = FS.read("assets/image_small.jpg")
+        tiering_filename = "image_small_tiering.jpg"
+        cost = 1
+
+        # Act & Assert
+        log.info("##### test for cost < 100 #####")
+        log.info("creating file in tiering")
+        assert tiering_filename not in AWS.list()
+        assert tiering_filename not in FS.list(".")
+        assert MEM.read(tiering_filename) is None
+        tiering.create(tiering_filename, content, cost)
+        assert tiering_filename in AWS.list()
+        assert tiering_filename not in FS.list(".")
+        assert MEM.read(tiering_filename) is None
+
+        log.info("reading file from tiering")
+        content_tiering = tiering.read(tiering_filename, cost)
+        assert content == content_tiering
+
+        log.info("deleting file from tiering")
+        tiering.delete(tiering_filename, cost)
+        assert tiering_filename not in AWS.list()
+        assert tiering_filename not in FS.list(".")
+        assert MEM.read(tiering_filename) is None
+
+        log.info("##### test for cost > 100 #####")
+        cost = 101
+        log.info("creating file in tiering")
+        assert tiering_filename not in AWS.list()
+        assert tiering_filename not in FS.list(".")
+        assert MEM.read(tiering_filename) is None
+        tiering.create(tiering_filename, content, cost)
+        assert tiering_filename not in AWS.list()
+        assert tiering_filename in FS.list(".")
+        assert MEM.read(tiering_filename) is None
+
+        log.info("reading file from tiering")
+        content_tiering = tiering.read(tiering_filename, cost)
+        assert content == content_tiering
+
+        log.info("deleting file from tiering")
+        tiering.delete(tiering_filename, cost)
+        assert tiering_filename not in AWS.list()
+        assert tiering_filename not in FS.list(".")
+        assert MEM.read(tiering_filename) is None
+
+        log.info("##### test for cost > 1000 #####")
+        cost = 1001
+        log.info("creating file in tiering")
+        assert tiering_filename not in AWS.list()
+        assert tiering_filename not in FS.list(".")
+        assert MEM.read(tiering_filename) is None
+        tiering.create(tiering_filename, content, cost)
+        assert tiering_filename not in AWS.list()
+        assert tiering_filename not in FS.list(".")
+        assert MEM.read(tiering_filename) == content
+
+        log.info("reading file from tiering")
+        content_tiering = tiering.read(tiering_filename, cost)
+        assert content == content_tiering
+
+        log.info("deleting file from tiering")
+        tiering.delete(tiering_filename, cost)
+        assert tiering_filename not in AWS.list()
+        assert tiering_filename not in FS.list(".")
+        assert MEM.read(tiering_filename) is None
+
+    def test_2level_cache(self):
+        pass
+
+    def test_auto_tiering(self):
+        pass
