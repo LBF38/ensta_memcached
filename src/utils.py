@@ -84,13 +84,17 @@ class AWSS3(Storage):
 
     def create(self, filename: str, data: bytes):
         self.log.debug("create - filename: %s", filename)
-        with open(filename, "rb") as data:
-            self.bucket.put_object(Key=filename, Body=data)
+        self.bucket.put_object(Key=filename, Body=data)
 
     def read(self, filename: str):
         self.log.debug("read - filename: %s", filename)
-        return self.s3.Object("ensta", filename).get()["Body"].read().decode("UTF-8")
+        obj = self.bucket.Object(filename)
+        resource = obj.get()["Body"].read()
+        self.log.debug("read - resource: %s", resource[:10])
+        return resource
+        # return self.s3.Object("ensta", filename).get()["Body"].read().decode("UTF-8")
 
-    def delete(self):
-        self.log.warning("delete - Not implemented")
-        pass
+    def delete(self, filename: str):
+        self.log.debug("delete - filename: %s", filename)
+        self.bucket.Object(filename).delete()
+        self.log.debug("delete - done")
