@@ -108,7 +108,7 @@ class AWSS3(Storage):
         self.log.debug("create - filename: %s", filename)
         self.bucket.put_object(Key=filename, Body=data)
 
-    def read(self, filename: str):
+    def read(self, filename: str) -> bytes:
         self.log.debug("read - filename: %s", filename)
         obj = self.bucket.Object(filename)
         resource = obj.get()["Body"].read()
@@ -122,8 +122,38 @@ class AWSS3(Storage):
         self.log.debug("delete - done")
 
 
-class Replica:
-    pass
+class Replica(Storage):
+    def __init__(self, filesystem: FileSystem, aws: AWSS3) -> None:
+        self.fs = filesystem
+        self.aws = aws
+        self.log = logging.getLogger("Replica")
+
+    def create(self, key: str, data: bytes):
+        self.log.debug("create - key: %s", key)
+        self.fs.create(key, data)
+        self.log.debug("file created in filesystem at key: %s", key)
+        self.aws.create(key, data)
+        self.log.debug("file created in aws at key: %s", key)
+
+    def read(self, filename: str):
+        self.log.debug("read - filename: %s", filename)
+        try:
+            self.log.debug("trying filesystem")
+            self.fs.read(filename)
+        except FileNotFoundError:
+            self.log.debug("file not found in filesystem, trying aws")
+            content = self.aws.read(filename)
+            self.log.debug("file found in aws, creating in filesystem")
+            self.fs.create(filename, content)
+            self.log.debug("file created in filesystem")
+            return content
+
+    def delete(self, key: str):
+        try:
+            self.fs.delete(key)
+            self.aws.delete(key)
+        except Exception as e:
+            self.log.error(e)
 
 
 class Tiering:
