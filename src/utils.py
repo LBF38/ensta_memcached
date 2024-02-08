@@ -193,7 +193,82 @@ class Tiering(Storage):
 
 
 class LRU:
-    pass
+    def __init__(self, capacity: int = 10) -> None:
+        self.__head = self.__tail = None
+        self.__capacity = capacity
+        self.__length = 0
+        self.__lookup: dict = {}
+        self.__reverseLookup: dict = {}
+
+    def create(self, key, value):
+        # does it exist ?
+        node = self.__lookup.get(key)
+        if node is None:
+            node = self.__createNode(value)
+            self.__length += 1
+            self.__prepend(node)
+            self.__trimCache()
+
+            self.__lookup[key] = node
+            self.__reverseLookup[node] = key
+        else:
+            self.__detach(node)
+            self.__prepend(node)
+            node.value = value
+
+    def read(self, key):
+        node = self.__lookup.get(key)
+        if node is None:
+            return
+
+        self.__detach(node)
+        self.__prepend(node)
+
+        return node.value
+
+    def delete(self, key):
+        node = self.__lookup.get(key)
+        if node is None:
+            return
+
+        self.__detach(node)
+        self.__length -= 1
+        del self.__lookup[key]
+        del self.__reverseLookup[node]
+
+    def __detach(self, node):
+        if node.prev:
+            node.prev.next = node.next
+        if node.next:
+            node.next.prev = node.prev
+
+        if self.__head == node:
+            self.__head = self.__head.next
+        if self.__tail == node:
+            self.__tail = self.__tail.prev
+
+        node.next = None
+        node.prev = None
+
+    def __prepend(self, node):
+        if not self.__head:
+            self.__head = self.__tail = node
+            return
+        node.next = self.__head
+        self.__head.prev = node
+        self.__head = node
+
+    def __trimCache(self):
+        if self.__length <= self.__capacity:
+            return
+        tail = self.__tail
+        self.__detach(tail)
+        del self.__lookup[self.__reverseLookup[tail]]
+        del self.__reverseLookup[tail]
+        self.__length -= 1
+
+    def __createNode(self, value):
+        return {value}
 
 
 def cache_2level():
