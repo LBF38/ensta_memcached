@@ -317,5 +317,29 @@ def cache_2level():
     pass
 
 
-class Auto_tiering:
-    pass
+class Auto_tiering(Tiering):
+    def __init__(self, filesystem: FileSystem, aws: AWSS3, memcached: Mem) -> None:
+        super().__init__(filesystem, aws, memcached)
+        self.log = logging.getLogger("Auto-tiering")
+        self.__frequency: Dict[str, int] = {}
+
+    def create(self, filename: str, data: bytes) -> None:
+        self.log.debug("create - filename: %s", filename)
+        self.__frequency[filename] = 0
+        super().create(
+            filename,
+            data,
+            self.__frequency[filename],
+        )
+
+    def read(self, filename: str) -> bytes:
+        self.log.debug("read - filename: %s", filename)
+        self.__frequency[filename] += 1
+        self.log.debug("read - frequency: %s", self.__frequency[filename])
+        return super().read(filename, self.__frequency[filename])
+
+    def delete(self, filename: str) -> None:
+        self.log.debug("delete - filename: %s", filename)
+        self.log.debug("delete - frequency: %s", self.__frequency[filename])
+        super().delete(filename, self.__frequency[filename])
+        del self.__frequency[filename]
