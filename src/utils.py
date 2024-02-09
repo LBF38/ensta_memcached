@@ -283,6 +283,36 @@ class LRU:
         return Node(value, None, None)
 
 
+class Mem_LRU(Storage):
+    def __init__(self, client: Client, capacity: int = 10) -> None:
+        self.client = client
+        self.lru = LRU(capacity)
+        self.log = logging.getLogger("Mem LRU")
+        self.log.debug("init - client %s", client.__class__)
+
+    def create(self, key: str, value: bytes):
+        self.log.debug("create - key: %s", key)
+        # self.client.set(key, value)
+        self.lru.create(key, value)
+
+    def read(self, key: str) -> bytes | None:
+        self.log.debug("read - key: %s", key)
+        value = self.lru.read(key)
+        # value = self.client.get(key)
+        if value is None:
+            self.log.warn("read - key not found")
+            # raise ValueError(f"Key {key} not found")
+            return None
+        self.log.debug("read - value: %s", value[:10])
+        return value
+
+    def delete(self, key: str):
+        self.log.debug("delete - key: %s", key)
+        # self.client.delete(key)
+        self.lru.delete(key)
+        self.log.debug("delete - done")
+
+
 def cache_2level():
     pass
 
