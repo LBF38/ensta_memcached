@@ -4,7 +4,7 @@ import unittest
 
 sys.path.append("src")
 from memcache import Client
-from utils import AWSS3, FileSystem, Mem, Replica, Tiering
+from utils import AWSS3, Auto_tiering, FileSystem, Mem, Replica, Tiering
 
 logging.basicConfig(level=logging.INFO)
 
@@ -113,4 +113,40 @@ class TestStorage(unittest.TestCase):
         pass
 
     def test_auto_tiering(self):
-        pass
+        # Arrange
+        auto_tiering = Auto_tiering(FS, AWS, MEM)
+        content = FS.read("assets/image_small.jpg")
+        auto_tiering_filename = "image_small_auto_tiering.jpg"
+
+        # Act & Assert
+        log.info("creating file in auto_tiering")
+        assert auto_tiering_filename not in AWS.list()
+        assert auto_tiering_filename not in FS.list(".")
+        assert MEM.read(auto_tiering_filename) is None
+        auto_tiering.create(auto_tiering_filename, content)
+        assert auto_tiering_filename in AWS.list()
+        assert auto_tiering_filename not in FS.list(".")
+        assert MEM.read(auto_tiering_filename) is None
+
+        log.info("reading file from auto_tiering")
+        log.info("testing the auto tiering w/ lots of reads - 100 < cost < 1000")
+        for i in range(200):
+            content_auto_tiering = auto_tiering.read(auto_tiering_filename)
+            assert content == content_auto_tiering
+        assert MEM.read(auto_tiering_filename) is None
+        assert auto_tiering_filename in AWS.list()
+        assert auto_tiering_filename in FS.list(".")
+
+        log.info("testing the auto tiering w/ lots of reads - cost >= 1000")
+        for i in range(2000):
+            content_auto_tiering = auto_tiering.read(auto_tiering_filename)
+            assert content == content_auto_tiering
+        assert MEM.read(auto_tiering_filename) == content
+        assert auto_tiering_filename in AWS.list()
+        assert auto_tiering_filename in FS.list(".")
+
+        log.info("deleting file from auto_tiering")
+        auto_tiering.delete(auto_tiering_filename)
+        assert auto_tiering_filename not in AWS.list()
+        assert auto_tiering_filename not in FS.list(".")
+        assert MEM.read(auto_tiering_filename) is None
