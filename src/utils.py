@@ -351,14 +351,22 @@ class FileSystem_LRU(Storage):
 
 class TwoLevelCaching(Storage):
     """2 level caching
+
     This type of storage uses an LRU cache for managing the keys of the files in each storage.
-    Therefore, a first LRU cache is used in the Memcached storage, and a second LRU cache is used in the filesystem. These LRU caches are used to store the keys of the files that are stored in the Memcached storage and the filesystem, respectively.
+
+    Therefore, a first LRU cache is used in the Memcached storage, and a second LRU cache is used in the filesystem.
+
+    These LRU caches are used to store the keys of the files that are stored in the Memcached storage and the filesystem, respectively.
+
     They enable us to manage the keys based on the frequency of access to the files.
     """
 
     def __init__(
         self, mem_client: Client, fs_lru_capacity: int = 20, mem_lru_capacity: int = 15
     ) -> None:
+        assert (
+            fs_lru_capacity > mem_lru_capacity > 0
+        ), "fs_lru_capacity must be greater than mem_lru_capacity and both should be greater than 0"
         self.log = logging.getLogger("Cache_2level")
         self.aws = AWSS3()
         self.fs_lru = FileSystem_LRU(fs_lru_capacity)

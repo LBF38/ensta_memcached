@@ -2,9 +2,19 @@ import logging
 import sys
 import unittest
 
+import pytest
+
 sys.path.append("src")
 from memcache import Client
-from utils import AWSS3, Auto_tiering, FileSystem, Mem, Replica, Tiering
+from utils import (
+    AWSS3,
+    Auto_tiering,
+    FileSystem,
+    Mem,
+    Replica,
+    Tiering,
+    TwoLevelCaching,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -88,8 +98,33 @@ class TestStorage(unittest.TestCase):
         tiering.delete(tiering_filename, cost)
         self.__assertStorage(tiering_filename, content, aws=False, fs=False, mem=False)
 
-    def test_2level_cache(self):
-        pass
+    def test_two_level_caching(self):
+        # Arrange
+        with pytest.raises(AssertionError):
+            two_level_caching = TwoLevelCaching(MEM.client, 10, 100)
+        two_level_caching = TwoLevelCaching(MEM.client, 10, 5)
+        content = FS.read("assets/image_small.jpg")
+        two_level_caching_filename = "image_small_two_level_caching.jpg"
+
+        # Act & Assert
+        log.info("creating file in two_level_caching")
+        self.__assertStorage(
+            two_level_caching_filename, content, aws=False, fs=False, mem=False
+        )
+        two_level_caching.create(two_level_caching_filename, content)
+        self.__assertStorage(
+            two_level_caching_filename, content, aws=True, fs=True, mem=True
+        )
+
+        log.info("reading file from two_level_caching")
+        content_two_level_caching = two_level_caching.read(two_level_caching_filename)
+        assert content == content_two_level_caching
+
+        log.info("deleting file from two_level_caching")
+        two_level_caching.delete(two_level_caching_filename)
+        self.__assertStorage(
+            two_level_caching_filename, content, aws=False, fs=False, mem=False
+        )
 
     def test_auto_tiering(self):
         # Arrange

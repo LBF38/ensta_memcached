@@ -2,7 +2,7 @@ import logging
 import os
 
 from memcache import Client
-from utils import AWSS3, FileSystem, Mem, Replica, show_image
+from utils import AWSS3, FileSystem, Mem, Replica, TwoLevelCaching, show_image
 
 logging.basicConfig(level=logging.INFO)
 
@@ -79,7 +79,9 @@ if __name__ == "__main__":
     # memcached("assets/image_small.jpg")
     # aws_program()
     # print(AWS.list())
-    # print(AWS.delete("image_small_auto_tiering.jpg"))
+    # print(AWS.delete("image_small_two_level_caching.jpg"))
+    # print(MEM.delete("image_small_two_level_caching.jpg"))
+    # print(AWS.list())
     # print(MEM.create("K", b"\xff\xd8\xff\xe0\x00\x10JFIF"))
     # print(MEM.read("K"))
 
@@ -95,3 +97,6 @@ if __name__ == "__main__":
     # replica.delete("ouvrez_moi_copy.png")
     # log.info("file ouvrez_moi_copy.png deleted")
     # log.info(AWS.list())
+
+    #####? TwoLevelCache manual testing
+    # two_level_cache = TwoLevelCaching(MEM.client, 5, 10)
