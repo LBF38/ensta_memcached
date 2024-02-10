@@ -79,7 +79,7 @@ if __name__ == "__main__":
     # memcached("assets/image_small.jpg")
     # aws_program()
     # print(AWS.list())
-    # print(AWS.delete("new_file_s3.jpg"))
+    # print(AWS.delete("image_small_auto_tiering.jpg"))
     # print(MEM.create("K", b"\xff\xd8\xff\xe0\x00\x10JFIF"))
     # print(MEM.read("K"))
 

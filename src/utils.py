@@ -314,6 +314,11 @@ class Mem_LRU(Storage):
 
 
 def cache_2level():
+    """2 level caching
+    This type of storage uses an LRU cache for managing the keys of the files in each storage.
+    Therefore, a first LRU cache is used in the Memcached storage, and a second LRU cache is used in the filesystem. These LRU caches are used to store the keys of the files that are stored in the Memcached storage and the filesystem, respectively.
+    They enable us to manage the keys based on the frequency of access to the files.
+    """
     pass
 
 
