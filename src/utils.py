@@ -342,6 +342,7 @@ class Auto_tiering(Tiering):
     def read(self, filename: str) -> bytes:
         self.log.debug("read - filename: %s", filename)
         self.__frequency[filename] += 1
+        # ^ This can be updated to a more complex algorithm for calculating the frequency of access based on the time of access.
         self.log.debug("read - frequency: %s", self.__frequency[filename])
         self.__auto_check(filename)
         return super().read(filename, self.__frequency[filename])
