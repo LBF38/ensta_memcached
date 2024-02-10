@@ -1,8 +1,11 @@
-import unittest
+import os
 import sys
+import unittest
 
-sys.path.append("src")
-from utils import LRU
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
+from utils.LRU import LRU
 
 
 class TestLRU(unittest.TestCase):

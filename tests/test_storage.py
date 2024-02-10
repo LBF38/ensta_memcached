@@ -1,20 +1,10 @@
 import logging
-import sys
 import unittest
 
 import pytest
-
-sys.path.append("src")
 from memcache import Client
-from utils import (
-    AWSS3,
-    Auto_tiering,
-    FileSystem,
-    Mem,
-    Replica,
-    Tiering,
-    TwoLevelCaching,
-)
+from utils.base_storage import AWSS3, FileSystem, Mem
+from utils.complex_storage import Auto_tiering, Replica, Tiering, TwoLevelCaching
 
 logging.basicConfig(level=logging.DEBUG)
 

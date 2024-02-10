@@ -2,7 +2,8 @@ import logging
 import os
 
 from memcache import Client
-from utils import AWSS3, FileSystem, Mem, Replica, TwoLevelCaching, show_image
+from utils.image import show_image
+from utils.base_storage import AWSS3, FileSystem, Mem
 
 logging.basicConfig(level=logging.INFO)
 
