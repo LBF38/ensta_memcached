@@ -14,6 +14,17 @@ if not (os.getenv("ak") and os.getenv("sk")):
 
 
 class Storage:
+    """Storage interface for different storage types
+
+    This class is an interface for different storage types like FileSystem, Mem, AWSS3.
+
+    It has three methods:
+    - create: to create a file in the storage
+    - read: to read a file from the storage
+    - delete: to delete a file from the storage
+
+    """
+
     @abstractmethod
     def create(self, key: str, data: bytes) -> None:
         pass
@@ -28,6 +39,8 @@ class Storage:
 
 
 class FileSystem(Storage):
+    """FileSystem class for file operations"""
+
     def __init__(self) -> None:
         self.log = logging.getLogger("FileSystem")
 
@@ -51,6 +64,8 @@ class FileSystem(Storage):
 
 
 class Mem(Storage):
+    """Mem class for memcached operations"""
+
     def __init__(self, client: Client) -> None:
         self.client = client
         self.log = logging.getLogger("Mem")
@@ -59,10 +74,7 @@ class Mem(Storage):
     def create(self, key: str, value: bytes):
         self.log.debug("create - key: %s", key)
         self.client.set(key, value)
-        print("create - done val:", type(value))
-        print(value[:10])
-        print("key: ", key)
-        # self.log.debug("create - done val:" + type(val))
+        self.log.debug("create - done")
 
     def read(self, key: str) -> bytes | None:
         self.log.debug("read - key: %s", key)
@@ -81,6 +93,8 @@ class Mem(Storage):
 
 
 class AWSS3(Storage):
+    """AWS S3 class for file operations using AWS S3 bucket"""
+
     def __init__(self) -> None:
         self.ak = os.getenv("ak")
         self.sk = os.getenv("sk")

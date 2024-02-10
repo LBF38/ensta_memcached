@@ -2,6 +2,14 @@ from typing import Dict, Optional
 
 
 class Node:
+    """Node class for doubly linked list
+
+    Args:
+        value (str): value of the node
+        prev (Optional["Node"], optional): previous node. Defaults to None.
+        next (Optional["Node"], optional): next node. Defaults to None.
+    """
+
     def __init__(
         self, value: str, prev: Optional["Node"] = None, next: Optional["Node"] = None
     ) -> None:
@@ -11,6 +19,14 @@ class Node:
 
 
 class LRU:
+    """Least Recently Used Cache
+
+    This class represents a Least Recently Used (LRU) cache implementation.
+    It provides methods for creating, reading, and deleting key-value pairs.
+    The cache has a specified capacity, and when the capacity is exceeded,
+    the least recently used item is evicted from the cache.
+    """
+
     def __init__(self, capacity: int = 10) -> None:
         self.__head: Node | None = None
         self.__tail: Node | None = None

@@ -15,6 +15,8 @@ if not (os.getenv("ak") and os.getenv("sk")):
 
 
 class Replica(Storage):
+    """Replica storage"""
+
     def __init__(self, filesystem: FileSystem, aws: AWSS3) -> None:
         self.fs = filesystem
         self.aws = aws
@@ -49,6 +51,8 @@ class Replica(Storage):
 
 
 class Tiering(Storage):
+    """Tiering storage"""
+
     def __init__(self, filesystem: FileSystem, aws: AWSS3, memcached: Mem) -> None:
         self.fs = filesystem
         self.aws = aws
@@ -142,6 +146,8 @@ class TwoLevelCaching(Storage):
 
 
 class Auto_tiering(Tiering):
+    """Auto-tiering storage"""
+
     def __init__(self, filesystem: FileSystem, aws: AWSS3, memcached: Mem) -> None:
         super().__init__(filesystem, aws, memcached)
         self.log = logging.getLogger("Auto-tiering")
