@@ -289,38 +289,113 @@ class Mem_LRU(Storage):
         self.client = client
         self.lru = LRU(capacity)
         self.log = logging.getLogger("Mem LRU")
-        self.log.debug("init - client %s", client.__class__)
+        self.log.debug("init - client %s", client.__class__.__name__)
 
     def create(self, key: str, value: bytes):
         self.log.debug("create - key: %s", key)
-        # self.client.set(key, value)
-        self.lru.create(key, value)
+        del_key = self.lru.create(key, key)
+        self.client.set(key, value)
+        if del_key:
+            self.client.delete(del_key)
 
     def read(self, key: str) -> bytes | None:
         self.log.debug("read - key: %s", key)
-        value = self.lru.read(key)
-        # value = self.client.get(key)
-        if value is None:
+        key = self.lru.read(key)
+        if key is None:
             self.log.warn("read - key not found")
             # raise ValueError(f"Key {key} not found")
             return None
-        self.log.debug("read - value: %s", value[:10])
+        value = self.client.get(key)
+        self.log.debug("read - value: %s", key[:10])
         return value
 
     def delete(self, key: str):
         self.log.debug("delete - key: %s", key)
-        # self.client.delete(key)
         self.lru.delete(key)
+        self.client.delete(key)
         self.log.debug("delete - done")
 
 
-def cache_2level():
+class FileSystem_LRU(Storage):
+    def __init__(self, capacity: int = 10) -> None:
+        self.log = logging.getLogger("FileSystem LRU")
+        self.lru = LRU(capacity)
+
+    def list(self, directory: str):
+        self.log.debug("list - directory: %s", directory)
+        return os.listdir(directory)
+
+    def create(self, filename: str, data: bytes):
+        self.log.debug("create - filename: %s", filename)
+        del_filename = self.lru.create(filename, filename)
+        with open(filename, "wb") as file:
+            file.write(data)
+        if del_filename:
+            self.delete(del_filename)
+
+    def delete(self, filename: str):
+        self.log.debug("delete - filename: %s", filename)
+        self.lru.delete(filename)
+        os.remove(filename)
+
+    def read(self, filename: str):
+        self.log.debug("read - filename: %s", filename)
+        lru_filename = self.lru.read(filename)
+        if lru_filename is None:
+            self.log.warn("read - filename not found")
+            # raise ValueError(f"Filename {filename} not found")
+            return None
+        with open(lru_filename, "rb") as file:
+            return file.read()
+
+
+class TwoLevelCaching(Storage):
     """2 level caching
     This type of storage uses an LRU cache for managing the keys of the files in each storage.
     Therefore, a first LRU cache is used in the Memcached storage, and a second LRU cache is used in the filesystem. These LRU caches are used to store the keys of the files that are stored in the Memcached storage and the filesystem, respectively.
     They enable us to manage the keys based on the frequency of access to the files.
     """
-    pass
+
+    def __init__(
+        self, mem_client: Client, fs_lru_capacity: int = 20, mem_lru_capacity: int = 15
+    ) -> None:
+        self.log = logging.getLogger("Cache_2level")
+        self.aws = AWSS3()
+        self.fs_lru = FileSystem_LRU(fs_lru_capacity)
+        self.mem_lru = Mem_LRU(mem_client, mem_lru_capacity)
+
+    def create(self, key: str, value: bytes):
+        self.log.debug("create - key: %s", key)
+        self.aws.create(key, value)
+        self.fs_lru.create(key, value)
+        self.mem_lru.create(key, value)
+        self.log.debug("create - done")
+
+    def read(self, key: str) -> bytes | None:
+        self.log.debug("read - key: %s", key)
+        mem_value = self.mem_lru.read(key)
+        if mem_value is None:
+            fs_value = self.fs_lru.read(key)
+            if fs_value is None:
+                self.log.warn("read - key not found in LRU caches")
+                aws_value = self.aws.read(key)
+                self.log.debug("read from aws - value: %s", mem_value[:10])
+                self.fs_lru.create(key, aws_value)
+                self.mem_lru.create(key, aws_value)
+                return aws_value
+            self.log.debug("read from fs - value: %s", mem_value[:10])
+            self.mem_lru.create(key, fs_value)
+            return fs_value
+        self.log.debug("read from mem - value: %s", mem_value[:10])
+        self.log.debug("read - done")
+        return mem_value
+
+    def delete(self, key: str):
+        self.log.debug("delete - key: %s", key)
+        self.mem_lru.delete(key)
+        self.fs_lru.delete(key)
+        self.aws.delete(key)
+        self.log.debug("delete - done")
 
 
 class Auto_tiering(Tiering):
