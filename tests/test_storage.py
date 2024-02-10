@@ -6,7 +6,7 @@ sys.path.append("src")
 from memcache import Client
 from utils import AWSS3, Auto_tiering, FileSystem, Mem, Replica, Tiering
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 FS = FileSystem()
 client = Client(["localhost"], debug=0)
@@ -134,7 +134,7 @@ class TestStorage(unittest.TestCase):
             content_auto_tiering = auto_tiering.read(auto_tiering_filename)
             assert content == content_auto_tiering
         assert MEM.read(auto_tiering_filename) is None
-        assert auto_tiering_filename in AWS.list()
+        assert auto_tiering_filename not in AWS.list()
         assert auto_tiering_filename in FS.list(".")
 
         log.info("testing the auto tiering w/ lots of reads - cost >= 1000")
@@ -142,8 +142,8 @@ class TestStorage(unittest.TestCase):
             content_auto_tiering = auto_tiering.read(auto_tiering_filename)
             assert content == content_auto_tiering
         assert MEM.read(auto_tiering_filename) == content
-        assert auto_tiering_filename in AWS.list()
-        assert auto_tiering_filename in FS.list(".")
+        assert auto_tiering_filename not in AWS.list()
+        assert auto_tiering_filename not in FS.list(".")
 
         log.info("deleting file from auto_tiering")
         auto_tiering.delete(auto_tiering_filename)

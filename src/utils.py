@@ -166,21 +166,21 @@ class Tiering(Storage):
 
     def create(self, key: str, data: bytes, cost: int):
         self.log.debug("create - key: %s", key)
-        self.__storage(cost).create(key, data)
+        self._storage(cost).create(key, data)
         self.log.debug("create - done")
 
     def read(self, filename: str, cost: int) -> bytes:
-        return self.__storage(cost).read(filename)
+        return self._storage(cost).read(filename)
 
     def delete(self, key: str, cost: int) -> None:
         self.log.debug("delete - key: %s", key)
         try:
-            self.__storage(cost).delete(key)
+            self._storage(cost).delete(key)
         except Exception as e:
             self.log.error(e)
         self.log.debug("delete - done")
 
-    def __storage(self, cost: int) -> Storage:
+    def _storage(self, cost: int) -> Storage:
         self.log.debug("storage - cost: %s", cost)
         if cost < 100:
             self.log.debug("cost < 100: aws storage")
@@ -327,10 +327,12 @@ class Auto_tiering(Tiering):
         super().__init__(filesystem, aws, memcached)
         self.log = logging.getLogger("Auto-tiering")
         self.__frequency: Dict[str, int] = {}
+        self.__current_storage: Storage
 
     def create(self, filename: str, data: bytes) -> None:
         self.log.debug("create - filename: %s", filename)
         self.__frequency[filename] = 0
+        self.__current_storage = super()._storage(self.__frequency[filename])
         super().create(
             filename,
             data,
@@ -341,6 +343,7 @@ class Auto_tiering(Tiering):
         self.log.debug("read - filename: %s", filename)
         self.__frequency[filename] += 1
         self.log.debug("read - frequency: %s", self.__frequency[filename])
+        self.__auto_check(filename)
         return super().read(filename, self.__frequency[filename])
 
     def delete(self, filename: str) -> None:
@@ -348,3 +351,22 @@ class Auto_tiering(Tiering):
         self.log.debug("delete - frequency: %s", self.__frequency[filename])
         super().delete(filename, self.__frequency[filename])
         del self.__frequency[filename]
+
+    def __auto_check(self, filename: str) -> None:
+        self.log.debug("auto_check - filename: %s", filename)
+        if self.__current_storage != super()._storage(self.__frequency[filename]):
+            self.__move(filename)
+        self.log.debug("auto_check - done")
+
+    def __move(self, filename: str) -> None:
+        self.log.debug("move - filename: %s", filename)
+        content = self.__current_storage.read(filename)
+        self.log.debug("move - content: %s", content[:10])
+        super().create(filename, content, self.__frequency[filename])
+        self.__current_storage.delete(filename)
+        self.log.debug(
+            "move - update current storage to %s",
+            super()._storage(self.__frequency[filename]).__class__.__name__,
+        )
+        self.__current_storage = super()._storage(self.__frequency[filename])
+        self.log.debug("move - done")
