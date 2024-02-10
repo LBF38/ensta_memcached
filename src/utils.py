@@ -193,10 +193,9 @@ class Tiering(Storage):
             return self.mem
 
 
-# Node = namedtuple("Node", ["value", "prev", "next"])
 class Node:
     def __init__(
-        self, value: bytes, prev: Optional["Node"] = None, next: Optional["Node"] = None
+        self, value: str, prev: Optional["Node"] = None, next: Optional["Node"] = None
     ) -> None:
         self.value = value
         self.prev = prev
@@ -212,17 +211,18 @@ class LRU:
         self.__lookup: Dict[str, Node] = {}
         self.__reverseLookup: Dict[Node, str] = {}
 
-    def create(self, key: str, value: bytes):
+    def create(self, key: str, value: str) -> str | None:
         # does it exist ?
         node = self.__lookup.get(key)
         if node is None:
             node = self.__createNode(value)
             self.__length += 1
             self.__prepend(node)
-            self.__trimCache()
+            del_value = self.__trimCache()
 
             self.__lookup[key] = node
             self.__reverseLookup[node] = key
+            return del_value
         else:
             self.__detach(node)
             self.__prepend(node)
@@ -270,7 +270,7 @@ class LRU:
         self.__head.prev = node
         self.__head = node
 
-    def __trimCache(self):
+    def __trimCache(self) -> str | None:
         if self.__length <= self.__capacity:
             return
         tail = self.__tail
@@ -278,6 +278,7 @@ class LRU:
         del self.__lookup[self.__reverseLookup[tail]]
         del self.__reverseLookup[tail]
         self.__length -= 1
+        return tail.value
 
     def __createNode(self, value: bytes):
         return Node(value, None, None)

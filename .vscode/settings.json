@@ -4,7 +4,8 @@
         "memcached",
         "filesystem",
         "replica",
-        "storage"
+        "storage",
+        "LRU"
     ],
     "python.testing.unittestArgs": [
         "-v",
